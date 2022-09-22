@@ -12,6 +12,9 @@
     "idf.toolsPath": "/home/definics/.espressif",
     "files.associations": {
         "ads1115.h": "c",
-        "esp_spi_flash.h": "c"
-    }
+        "esp_spi_flash.h": "c",
+        "stdio.h": "c"
+    },
+    "idf.port": "/dev/ttyUSB0",
+    "idf.flashType": "UART"
 }

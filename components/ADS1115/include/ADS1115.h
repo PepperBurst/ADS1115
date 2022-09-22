@@ -2,6 +2,7 @@
 #define ADS1115_H
 
 #include <driver/i2c.h>
+#include <esp_log.h>
 
 #define ADS1115_ADDRESS_ADDR_GND 0x48 // address pin low (GND)
 #define ADS1115_ADDRESS_ADDR_VDD 0x49 // address pin high (VCC)
@@ -44,13 +45,18 @@
 #define ADS1115_MODE_CONTINUOUS 0x00
 #define ADS1115_MODE_SINGLESHOT 0x01 // default
 
+#define ADS1115_COMP_LAT_NON_LATCHING 0x00 // default
+#define ADS1115_COMP_LAT_LATCHING 0x01
+
 #define ADS1115_BEGIN_SINGLESHOT 0x01
 
+#define ADS1115_CFG_LATCH_BIT 2
 #define ADS1115_CFG_MODE_BIT 8
 #define ADS1115_CFG_GAIN_BIT 9
 #define ADS1115_CFG_MUX_BIT 12
 #define ADS1115_CFG_OS_BIT 15
 
+#define ADS1115_WORD_MASK_LATCH 0b00000001 << ADS1115_CFG_LATCH_BIT
 #define ADS1115_WORD_MASK_MODE 0b00000001 << ADS1115_CFG_MODE_BIT
 #define ADS1115_WORD_MASK_GAIN 0b00000111 << ADS1115_CFG_GAIN_BIT
 #define ADS1115_WORD_MASK_MUX 0b00000111 << ADS1115_CFG_MUX_BIT
@@ -74,11 +80,12 @@ esp_err_t ADS1115_write_word(ADS1115 *sensor, uint8_t reg_addr, uint16_t data);
 
 esp_err_t ADS1115_write_bits_word(ADS1115 *sensor, uint8_t reg_addr, uint16_t data, uint16_t mask, uint8_t bit_offset);
 
-esp_err_t ADS1115_init(ADS1115 *sensor, int i2c_bus_number);
+esp_err_t ADS1115_init(ADS1115 *sensor, uint8_t address, int i2c_bus_number);
 
 esp_err_t ADS1115_set_mode(ADS1115 *sensor, uint8_t mode);
 esp_err_t ADS1115_set_gain(ADS1115 *sensor, uint8_t gain);
 esp_err_t ADS1115_set_mux(ADS1115 *sensor, uint8_t mux);
+esp_err_t ADS1115_set_comparator_latch(ADS1115 *sensor, uint8_t latch);
 
 esp_err_t ADS1115_trigger_conversion(ADS1115 *sensor);
 
