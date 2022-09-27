@@ -48,19 +48,33 @@
 #define ADS1115_COMP_LAT_NON_LATCHING 0x00 // default
 #define ADS1115_COMP_LAT_LATCHING 0x01
 
+#define ADS1115_COMP_QUE_ASSERT1 0x00
+#define ADS1115_COMP_QUE_ASSERT2 0x01
+#define ADS1115_COMP_QUE_ASSERT4 0x02
+#define ADS1115_COMP_QUE_DISABLE 0x03 // default
+
+#define ADS1115_THRESH_READY_MODE 0x01
+
 #define ADS1115_BEGIN_SINGLESHOT 0x01
 
+#define ADS1115_CFG_COMP_QUE_BIT 0
 #define ADS1115_CFG_LATCH_BIT 2
 #define ADS1115_CFG_MODE_BIT 8
 #define ADS1115_CFG_GAIN_BIT 9
 #define ADS1115_CFG_MUX_BIT 12
 #define ADS1115_CFG_OS_BIT 15
 
+#define ADS1115_THRESH_READY_BIT 15
+
+#define ADS1115_WORD_MASK_COMP_QUEUE 0b00000011 << ADS1115_CFG_COMP_QUE_BIT
 #define ADS1115_WORD_MASK_LATCH 0b00000001 << ADS1115_CFG_LATCH_BIT
 #define ADS1115_WORD_MASK_MODE 0b00000001 << ADS1115_CFG_MODE_BIT
 #define ADS1115_WORD_MASK_GAIN 0b00000111 << ADS1115_CFG_GAIN_BIT
 #define ADS1115_WORD_MASK_MUX 0b00000111 << ADS1115_CFG_MUX_BIT
 #define ADS1115_WORD_MASK_OS 0b00000001 << ADS1115_CFG_OS_BIT
+#define ADS1115_WORD_MASK_READY 0b00000001 << ADS1115_THRESH_READY_BIT
+
+#define ADS1115_MUX_COUNT 8
 
 typedef struct
 {
@@ -69,7 +83,10 @@ typedef struct
     uint8_t status;
     uint8_t mode;
     uint8_t pga;
+    float bit_equivalent;
     uint8_t mux;
+    uint16_t conversion[ADS1115_MUX_COUNT];
+    float millivolts[ADS1115_MUX_COUNT];
 } ADS1115;
 
 esp_err_t ADS1115_read_bytes(ADS1115 *sensor, uint8_t reg_addr,
@@ -81,12 +98,19 @@ esp_err_t ADS1115_write_word(ADS1115 *sensor, uint8_t reg_addr, uint16_t data);
 esp_err_t ADS1115_write_bits_word(ADS1115 *sensor, uint8_t reg_addr, uint16_t data, uint16_t mask, uint8_t bit_offset);
 
 esp_err_t ADS1115_init(ADS1115 *sensor, uint8_t address, int i2c_bus_number);
+esp_err_t ADS1115_reset(ADS1115 *sensor);
 
 esp_err_t ADS1115_set_mode(ADS1115 *sensor, uint8_t mode);
 esp_err_t ADS1115_set_gain(ADS1115 *sensor, uint8_t gain);
 esp_err_t ADS1115_set_mux(ADS1115 *sensor, uint8_t mux);
 esp_err_t ADS1115_set_comparator_latch(ADS1115 *sensor, uint8_t latch);
+esp_err_t ADS1115_set_comparator_queue(ADS1115 *sensor, uint8_t queue);
+esp_err_t ADS1115_set_ready_mode(ADS1115 *sensor);
 
 esp_err_t ADS1115_trigger_conversion(ADS1115 *sensor);
+
+esp_err_t ADS1115_get_conversion(ADS1115 *sensor);
+
+float ADS1115_get_millivolts(ADS1115 *sensor);
 
 #endif // !ADS1115_H

@@ -5,6 +5,7 @@
 #include <esp_log.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 #include <stdio.h>
 
 #define PIN_LED GPIO_NUM_19
@@ -17,6 +18,8 @@
 void vReadAdc(void *pvParameters);
 
 ADS1115 adc_ic_1;
+
+SemaphoreHandle_t xBinarySemaphoreAdcReady;
 
 void app_main(void)
 {
@@ -44,6 +47,12 @@ void app_main(void)
        i2c_param_config(I2C_MASTER_NUM, &i2c_conf);
        i2c_driver_install(I2C_MASTER_NUM, i2c_conf.mode, 0, 0, 0);
 
+       xBinarySemaphoreAdcReady = xSemaphoreCreateBinary();
+
+       ADS1115_reset(&adc_ic_1);
+
+       vTaskDelay(pdMS_TO_TICKS(1000));
+
        uint8_t status = ADS1115_init(&adc_ic_1, ADS1115_I2C_ADDRESS, I2C_MASTER_NUM);
 
        ESP_LOGI("ADS1115", "Sensor Address %02x", adc_ic_1.i2c_addess);
@@ -53,15 +62,22 @@ void app_main(void)
 
 void vReadAdc(void *pvParameters)
 {
-       ADS1115_set_mode(&adc_ic_1, ADS1115_MODE_SINGLESHOT);
+       ADS1115_set_mode(&adc_ic_1, ADS1115_MODE_CONTINUOUS);
        ADS1115_set_gain(&adc_ic_1, ADS1115_PGA_2P048);
-       ADS1115_set_mux(&adc_ic_1, ADS1115_MUX_P0_NG);
-       ADS1115_set_comparator_latch(&adc_ic_1, ADS1115_COMP_LAT_LATCHING);
+       ADS1115_set_mux(&adc_ic_1, ADS1115_MUX_P1_NG);
+       // ADS1115_set_comparator_latch(&adc_ic_1, ADS1115_COMP_LAT_LATCHING);
+       // ADS1115_set_comparator_queue(&adc_ic_1, ADS1115_COMP_QUE_ASSERT1);
+       // ADS1115_set_ready_mode(&adc_ic_1);
+       // vTaskDelay(pdMS_TO_TICKS(1000));
+       // ADS1115_init(&adc_ic_1, ADS1115_I2C_ADDRESS, I2C_MASTER_NUM);
+       // ADS1115_trigger_conversion(&adc_ic_1);
        vTaskDelay(pdMS_TO_TICKS(1000));
-       ADS1115_trigger_conversion(&adc_ic_1);
+       // ADS1115_init(&adc_ic_1, ADS1115_I2C_ADDRESS, I2C_MASTER_NUM);
        for (;;)
        {
-              ESP_LOGI("Read ADC", "Read 1 sec");
+              // xSemaphoreTake(xBinarySemaphoreAdcReady, portMAX_DELAY);
+              ADS1115_get_conversion(&adc_ic_1);
+              ESP_LOGI("Read ADC", "Raw: %04x Equivalent: %0.0f mV", adc_ic_1.conversion[adc_ic_1.mux], ADS1115_get_millivolts(&adc_ic_1));
               vTaskDelay(pdMS_TO_TICKS(1000));
        }
 }
